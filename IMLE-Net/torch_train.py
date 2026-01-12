@@ -6,7 +6,7 @@ __version__ = "1.0.0"
 __email__ = "likith012@gmail.com"
 
 
-from typing import Tuple
+from typing import Tuple, Optional
 import os
 import random
 import argparse
@@ -28,7 +28,7 @@ random.seed(seed)
 np.random.seed(seed)
 
 
-def dump_logs(train_results: tuple, test_results: tuple, name: str):
+def dump_logs(train_results: tuple, test_results: tuple, name: str) -> None:
     """Dumps the performance logs to a json file.
 
     Parameters
@@ -59,12 +59,12 @@ def dump_logs(train_results: tuple, test_results: tuple, name: str):
 
 def train_epoch(
     model: nn.Module,
-    optimizer: torch.optim,
-    loss_func,
-    dataset,
+    optimizer: torch.optim.Optimizer,
+    loss_func: nn.Module,
+    dataset: DataGen,
     epoch: int,
     device: torch.device,
-    loggr: bool = False,
+    loggr: Optional[wandb.sdk.wandb_run.Run] = None,
 ) -> Tuple[float, float, float]:
     """Training of the model for one epoch.
 
@@ -72,18 +72,23 @@ def train_epoch(
     ----------
     model: nn.Module
         Model to be trained.
-    optimizer: torch.optim
+    optimizer: torch.optim.Optimizer
         Optimizer to be used.
-    loss_func: torch.nn._Loss
+    loss_func: nn.Module
         Loss function to be used.
-    dataset: torch.utils.data.DataLoader
+    dataset: DataGen
         Dataset to be used.
-    epoch: int, optional
+    epoch: int
         The current epoch.
     device: torch.device
         Device to be used.
-    loggr: bool, optional
-        To log wandb metrics. (default: False)
+    loggr: Optional[wandb.sdk.wandb_run.Run], optional
+        To log wandb metrics. (default: None)
+
+    Returns
+    -------
+    Tuple[float, float, float]
+        Training loss, mean accuracy, and ROC score.
 
     """
 
@@ -108,8 +113,8 @@ def train_epoch(
         optimizer.step()
         gt_all.extend(batch_y.cpu().detach().numpy())
 
-    print("Epoch: {0}".format(epoch))
-    print("Train loss: ", np.mean(loss_all), end="\n" * 2)
+    print(f"Epoch: {epoch}")
+    print(f"Train loss: {np.mean(loss_all)}\n")
 
     pred_all = np.concatenate(pred_all, axis=0)
     _, mean_acc = Metrics(np.array(gt_all), pred_all)
@@ -120,16 +125,16 @@ def train_epoch(
         loggr.log({"train_roc_score": roc_score, "epoch": epoch})
         loggr.log({"train_loss": np.mean(loss_all), "epoch": epoch})
 
-    return np.mean(loss_all), mean_acc, roc_score
+    return float(np.mean(loss_all)), float(mean_acc), float(roc_score)
 
 
 def test_epoch(
     model: nn.Module,
-    loss_func: torch.optim,
-    dataset,
+    loss_func: nn.Module,
+    dataset: DataGen,
     epoch: int,
     device: torch.device,
-    loggr: bool = False,
+    loggr: Optional[wandb.sdk.wandb_run.Run] = None,
 ) -> Tuple[float, float, float]:
     """Testing of the model for one epoch.
 
@@ -137,16 +142,21 @@ def test_epoch(
     ----------
     model: nn.Module
         Model to be trained.
-    loss_func: torch.nn.BCEWithLogitsLoss
+    loss_func: nn.Module
         Loss function to be used.
-    dataset: torch.utils.data.DataLoader
+    dataset: DataGen
         Dataset to be used.
-    epoch: int, optional
+    epoch: int
         The current epoch.
     device: torch.device
         Device to be used.
-    loggr: bool, optional
-        To log wandb metrics. (default: False)
+    loggr: Optional[wandb.sdk.wandb_run.Run], optional
+        To log wandb metrics. (default: None)
+
+    Returns
+    -------
+    Tuple[float, float, float]
+        Test loss, mean accuracy, and ROC score.
 
     """
 
@@ -156,19 +166,20 @@ def test_epoch(
     loss_all = []
     gt_all = []
 
-    for batch_step in tqdm(range(len(dataset)), desc="valid"):
-        batch_x, batch_y = dataset[batch_step]
-        batch_x = batch_x.to(device)
-        batch_x = batch_x.permute(0, 2, 1)
-        batch_y = batch_y.to(device)
+    with torch.no_grad():
+        for batch_step in tqdm(range(len(dataset)), desc="valid"):
+            batch_x, batch_y = dataset[batch_step]
+            batch_x = batch_x.to(device)
+            batch_x = batch_x.permute(0, 2, 1)
+            batch_y = batch_y.to(device)
 
-        pred = model(batch_x)
-        pred_all.append(pred.cpu().detach().numpy())
-        loss = loss_func(pred, batch_y)
-        loss_all.append(loss.cpu().detach().numpy())
-        gt_all.extend(batch_y.cpu().detach().numpy())
+            pred = model(batch_x)
+            pred_all.append(pred.cpu().detach().numpy())
+            loss = loss_func(pred, batch_y)
+            loss_all.append(loss.cpu().detach().numpy())
+            gt_all.extend(batch_y.cpu().detach().numpy())
 
-    print("Test loss: ", np.mean(loss_all))
+    print(f"Test loss: {np.mean(loss_all)}")
     pred_all = np.concatenate(pred_all, axis=0)
     _, mean_acc = Metrics(np.array(gt_all), pred_all)
     roc_score = roc_auc_score(np.array(gt_all), pred_all, average="macro")
@@ -178,7 +189,7 @@ def test_epoch(
         loggr.log({"test_roc_score": roc_score, "epoch": epoch})
         loggr.log({"test_loss": np.mean(loss_all), "epoch": epoch})
 
-    return np.mean(loss_all), mean_acc, roc_score
+    return float(np.mean(loss_all)), float(mean_acc), float(roc_score)
 
 
 def train(
@@ -186,7 +197,7 @@ def train(
     path: str = "data/ptb",
     batch_size: int = 32,
     epochs: int = 60,
-    loggr: wandb = None,
+    loggr: Optional[wandb.sdk.wandb_run.Run] = None,
     name: str = "ecgnet",
 ) -> None:
     """Data preprocessing and training of the model.
@@ -201,7 +212,7 @@ def train(
         Batch size. (default: 32)
     epochs: int, optional
         Number of epochs. (default: 60)
-    loggr: wandb, optional
+    loggr: Optional[wandb.sdk.wandb_run.Run], optional
         To log wandb metrics. (default: None)
     name: str, optional
         Name of the model. (default: 'ecgnet')
@@ -216,11 +227,11 @@ def train(
     os.makedirs(checkpoint_filepath, exist_ok=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    #Distributed Training if for multiple GPUs 
+    # Distributed Training if for multiple GPUs
     if torch.cuda.device_count() > 1:
-        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        print(f"Let's use {torch.cuda.device_count()} GPUs!")
         model = nn.DataParallel(model)
-    elif torch.cuda.device_count() == 1 :
+    elif torch.cuda.device_count() == 1:
         print("You have a GPU on your system, Let's use it")
     else:
         print("You don't have any GPU available on your system, Let's use CPU")
@@ -237,9 +248,11 @@ def train(
         test_results = test_epoch(model, loss_func, val_gen, epoch, device, loggr=loggr)
 
         if epoch > 5 and best_score < test_results[2]:
+            best_score = test_results[2]
             save_path = os.path.join(checkpoint_filepath, f"{name}_weights.pt")
             torch.save(model.state_dict(), save_path)
             dump_logs(train_results, test_results, name)
+            print(f"Best model saved with ROC score: {best_score:.4f}")
 
 
 if __name__ == "__main__":
@@ -259,7 +272,7 @@ if __name__ == "__main__":
     parser.add_argument("--batchsize", type=int, default=32, help="Batch size")
     parser.add_argument("--epochs", type=int, default=60, help="Number of epochs")
     parser.add_argument(
-        "--loggr", type=bool, default=False, help="Enable wandb logging"
+        "--loggr", action="store_true", help="Enable wandb logging"
     )
     args = parser.parse_args()
 
@@ -267,21 +280,23 @@ if __name__ == "__main__":
         from models.ECGNet import ECGNet
 
         model = ECGNet()
-    else:
+    elif args.model == "resnet101":
         from models.resnet101 import resnet101
 
         model = resnet101()
+    else:
+        raise ValueError(f"Unknown model: {args.model}")
 
     if args.loggr:
         import wandb
 
-        wandb = wandb.init(
+        wandb_instance = wandb.init(
             project="IMLE-Net",
             name=args.model,
             notes=f"Model: {args.model} with batch size: {args.batchsize} and epochs: {args.epochs}",
             save_code=True,
         )
-        logger = wandb
+        logger = wandb_instance
     else:
         logger = None
 

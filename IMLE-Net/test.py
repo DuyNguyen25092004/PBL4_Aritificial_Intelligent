@@ -8,9 +8,11 @@ __email__ = "likith012@gmail.com"
 import argparse
 import os
 import json
+from typing import Any
 from tqdm import tqdm
 import numpy as np
 from sklearn.metrics import roc_auc_score
+import tensorflow as tf
 
 from preprocessing.preprocess import preprocess
 from utils.dataloader import DataGen
@@ -18,7 +20,10 @@ from utils.metrics import Metrics, AUC, metric_summary
 
 
 def test(
-    model, path: str = "data/ptb", batch_size: int = 32, name: str = "imle_net"
+    model: tf.keras.Model,
+    path: str = "data/ptb",
+    batch_size: int = 32,
+    name: str = "imle_net",
 ) -> None:
     """Testing the model and logging metrics.
 
@@ -42,7 +47,7 @@ def test(
     gt_all = []
 
     for X, y in tqdm(test_gen, desc="Testing Model"):
-        pred = model.predict(X)
+        pred = model.predict(X, verbose=0)
         pred_all.extend(pred.tolist())
         gt_all.extend(y.tolist())
 
@@ -59,18 +64,19 @@ def test(
     print(f"F1 score (Max): {summary[0]}")
     print(f"class wise precision, recall, f1 score : {summary}")
 
-    logs = dict()
-    logs["roc_score"] = roc_score
-    logs["mean_acc"] = mean_acc
-    logs["accuracy"] = acc
-    logs["class_auc"] = class_auc
-    logs["F1 score (Max)"] = summary[0]
-    logs["class_precision_recall_f1"] = summary
+    logs: dict[str, Any] = {
+        "roc_score": float(roc_score),
+        "mean_acc": float(mean_acc),
+        "accuracy": [float(x) for x in acc],
+        "class_auc": [float(x) for x in class_auc],
+        "F1 score (Max)": float(summary[0]),
+        "class_precision_recall_f1": summary,
+    }
     logs_path = os.path.join(os.getcwd(), "logs")
     os.makedirs(logs_path, exist_ok=True)
 
     with open(os.path.join(logs_path, f"{name}_test_logs.json"), "w") as json_file:
-        json.dump(logs, json_file)
+        json.dump(logs, json_file, indent=4)
 
 
 if __name__ == "__main__":
@@ -105,6 +111,8 @@ if __name__ == "__main__":
         from configs.rajpurkar_config import params
 
         model = build_rajpurkar(**params)
+    else:
+        raise ValueError(f"Unknown model: {args.model}")
 
     path_weights = os.path.join(os.getcwd(), "checkpoints", f"{args.model}_weights.h5")
     model.load_weights(path_weights)

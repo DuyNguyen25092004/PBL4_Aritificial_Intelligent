@@ -6,13 +6,13 @@ __version__ = "1.0.0"
 __email__ = "likith012@gmail.com"
 
 
-from typing import List
 import os
 import random
 import argparse
 import json
 from tqdm import tqdm
 import numpy as np
+from numpy.typing import NDArray
 from sklearn.metrics import roc_auc_score
 import torch
 import torch.nn as nn
@@ -28,22 +28,22 @@ np.random.seed(seed)
 
 
 def epoch_run(
-    model: nn.Module, dataset: torch.utils.data.Dataset, device: torch.device
-) -> List[np.array]:
+    model: nn.Module, dataset: DataGen, device: torch.device
+) -> NDArray[np.float64]:
     """Testing of the model.
 
     Parameters
     ----------
     model: nn.Module
         Model to be tested.
-    dataset: torch.utils.data.DataLoader
+    dataset: DataGen
         Dataset to be tested.
     device: torch.device
         Device to be used.
 
     Returns
     -------
-    np.array
+    NDArray[np.float64]
         Predicted values.
 
     """
@@ -52,14 +52,16 @@ def epoch_run(
     model.eval()
     pred_all = []
 
-    for batch_step in tqdm(range(len(dataset)), desc="test"):
-        batch_x, _ = dataset[batch_step]
-        batch_x = batch_x.permute(0, 2, 1).to(device)
-        pred = model(batch_x)
-        pred_all.append(pred.detach().cpu().numpy())
-    pred_all = np.concatenate(pred_all, axis=0)
+    with torch.no_grad():
+        for batch_step in tqdm(range(len(dataset)), desc="test"):
+            batch_x, _ = dataset[batch_step]
+            batch_x = batch_x.permute(0, 2, 1).to(device)
+            pred = model(batch_x)
+            pred_all.append(pred.detach().cpu().numpy())
+    
+    pred_all_array = np.concatenate(pred_all, axis=0)
 
-    return pred_all
+    return pred_all_array
 
 
 def test(
@@ -101,18 +103,19 @@ def test(
     print(f"F1 score (Max): {summary[0]}")
     print(f"class wise precision, recall, f1 score : {summary}")
 
-    logs = dict()
-    logs["roc_score"] = roc_score
-    logs["mean_acc"] = mean_acc
-    logs["accuracy"] = acc
-    logs["class_auc"] = class_auc
-    logs["F1 score (Max)"] = summary[0]
-    logs["class_precision_recall_f1"] = summary
+    logs = {
+        "roc_score": float(roc_score),
+        "mean_acc": float(mean_acc),
+        "accuracy": [float(x) for x in acc],
+        "class_auc": [float(x) for x in class_auc],
+        "F1 score (Max)": float(summary[0]),
+        "class_precision_recall_f1": summary,
+    }
     logs_path = os.path.join(os.getcwd(), "logs")
     os.makedirs(logs_path, exist_ok=True)
 
     with open(os.path.join(logs_path, f"{name}_test_logs.json"), "w") as json_file:
-        json.dump(logs, json_file)
+        json.dump(logs, json_file, indent=4)
 
 
 if __name__ == "__main__":
@@ -140,8 +143,12 @@ if __name__ == "__main__":
         from models.resnet101 import resnet101
 
         model = resnet101()
+    else:
+        raise ValueError(f"Unknown model: {args.model}")
 
     path_weights = os.path.join(os.getcwd(), "checkpoints", f"{args.model}_weights.pt")
-    model.load_state_dict(torch.load(path_weights))
+    
+    # Load model weights with weights_only=True for security
+    model.load_state_dict(torch.load(path_weights, weights_only=True))
 
     test(model, path=args.data_dir, batch_size=args.batchsize, name=args.model)

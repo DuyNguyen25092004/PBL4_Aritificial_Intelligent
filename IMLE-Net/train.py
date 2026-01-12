@@ -6,7 +6,11 @@ __version__ = "1.0.0"
 __email__ = "likith012@gmail.com"
 
 
-import logging, os, random, argparse
+import logging
+import os
+import random
+import argparse
+from typing import Optional
 from utils.tf_utils import set_tf_loglevel, str2bool
 
 set_tf_loglevel(logging.ERROR)
@@ -25,12 +29,13 @@ seed = 42
 random.seed(seed)
 np.random.seed(seed)
 
+
 def train(
-    model,
+    model: tf.keras.Model,
     path: str = "data/ptb",
-    batch_size: int = 32, # Reduce this to 16 if there is any memory problem
-    epochs: int = 60, 
-    loggr=None,
+    batch_size: int = 32,  # Reduce this to 16 if there is any memory problem
+    epochs: int = 60,
+    loggr: Optional[object] = None,
     name: str = "imle_net",
     sub_disease: bool = False,
 ) -> None:
@@ -46,7 +51,7 @@ def train(
         Batch size. (default: 32)
     epochs: int, optional
         Number of epochs. (default: 60)
-    loggr: wandb, optional
+    loggr: Optional[object], optional
         To log wandb metrics. (default: None)
     name: str, optional
         Name of the model. (default: 'imle_net')
@@ -101,10 +106,10 @@ def train(
                 os.getcwd(), "checkpoints", f"{name}_weights.h5"
             )
             model.load_weights(path_weights)
-        except:
+        except Exception as e:
             raise Exception(
                 "Model weights file not found, please train the model on main dataset first."
-            )
+            ) from e
 
         if name == "imle_net":
             outputs = tf.keras.layers.Dense(3, activation="softmax")(
@@ -154,7 +159,7 @@ if __name__ == "__main__":
     """Main function to run the training of the model."""
 
     # Set the GPU to allocate only used memory at runtime.
-    gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+    gpu_devices = tf.config.list_physical_devices('GPU')
     for device in gpu_devices:
         print(device)
         tf.config.experimental.set_memory_growth(device, True)
@@ -170,7 +175,12 @@ if __name__ == "__main__":
         default="imle_net",
         help="Select the model to train. (imle_net, mousavi, rajpurkar)",
     )
-    parser.add_argument("--batchsize", type=int, default=32, help="Batch size (Choose smaller batch size if available GPU memory is less)") 
+    parser.add_argument(
+        "--batchsize",
+        type=int,
+        default=32,
+        help="Batch size (Choose smaller batch size if available GPU memory is less)",
+    )
     parser.add_argument("--epochs", type=int, default=60, help="Number of epochs")
     parser.add_argument(
         "--loggr", type=str2bool, default=False, help="Enable wandb logging"
@@ -198,17 +208,19 @@ if __name__ == "__main__":
         from configs.rajpurkar_config import params
 
         model = build_rajpurkar(sub=args.sub, **params)
+    else:
+        raise ValueError(f"Unknown model: {args.model}")
 
     if args.loggr:
         import wandb
 
-        wandb = wandb.init(
+        wandb_instance = wandb.init(
             project="IMLE-Net",
             name=args.model,
             notes=f"Model: {args.model} with batch size: {args.batchsize} and epochs: {args.epochs}",
             save_code=True,
         )
-        logger = wandb
+        logger = wandb_instance
     else:
         logger = None
 
