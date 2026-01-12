@@ -13,7 +13,7 @@ This file can also be imported as a module and contains the following functions:
 """
 
 import math
-from typing import List
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -50,17 +50,17 @@ class BasicBlock(nn.Module):
         The expansion factor for the block.
     stride: int, optional
         The stride for 1D-convolution. (default: 1)
-    downsample: bool, optional
-        If True, downsamples the input. (default: None)
-    dropout: float
-        The dropout probability.
+    downsample: Optional[nn.Module], optional
+        If provided, downsamples the input. (default: None)
+    dropout: nn.Module
+        The dropout layer.
 
     """
 
     expansion = 1
 
     def __init__(
-        self, inplanes: int, planes: int, stride: int = 1, downsample: bool = None
+        self, inplanes: int, planes: int, stride: int = 1, downsample: Optional[nn.Module] = None
     ) -> None:
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
@@ -99,15 +99,15 @@ class Bottleneck(nn.Module):
         The expansion factor for the block.
     stride: int, optional
         The stride for 1D-convolution. (default: 1)
-    downsample: bool, optional
-        If True, downsamples the input. (default: None)
+    downsample: Optional[nn.Module], optional
+        If provided, downsamples the input. (default: None)
 
     """
 
     expansion = 4
 
     def __init__(
-        self, inplanes: int, planes: int, stride: int = 1, downsample: bool = None
+        self, inplanes: int, planes: int, stride: int = 1, downsample: Optional[nn.Module] = None
     ) -> None:
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv1d(inplanes, planes, kernel_size=7, bias=False, padding=3)
@@ -150,7 +150,7 @@ class Bottleneck(nn.Module):
 class ResNet(nn.Module):
     """Builds the Resnet model"""
 
-    def __init__(self, block: int, layers: int, num_classes: int = 5) -> None:
+    def __init__(self, block: type[nn.Module], layers: list[int], num_classes: int = 5) -> None:
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv1d(12, 64, kernel_size=15, stride=2, padding=7, bias=False)
@@ -173,13 +173,13 @@ class ResNet(nn.Module):
                 m.bias.data.zero_()
 
     def _make_layer(
-        self, block: int, planes: int, blocks: int, stride: int = 1
-    ) -> List[nn.Module]:
+        self, block: type[nn.Module], planes: int, blocks: int, stride: int = 1
+    ) -> nn.Sequential:
         """Builds the Resnet layers
 
         Parameters
         ----------
-         block: nn.Module
+         block: type[nn.Module]
              The block to use.
          planes: int
              The number of input channels.
@@ -190,7 +190,7 @@ class ResNet(nn.Module):
 
          Returns
          -------
-         nn.Module
+         nn.Sequential
              The output of Resnet layer.
 
         """
@@ -237,7 +237,7 @@ def resnet101(**kwargs) -> ResNet:
 
     Returns
     -------
-    nn.Module
+    ResNet
         The output of Resnet-101 model.
 
     """

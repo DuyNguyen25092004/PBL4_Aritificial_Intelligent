@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     path_weights = os.path.join(os.getcwd(), "checkpoints", f"{args.model}_weights.pt")
     
-    # Load model weights with weights_only=True for security
+    # Fixed: Added weights_only=True for Python 3.12 security
     model.load_state_dict(torch.load(path_weights, weights_only=True))
 
     test(model, path=args.data_dir, batch_size=args.batchsize, name=args.model)

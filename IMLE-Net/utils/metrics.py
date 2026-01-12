@@ -4,24 +4,25 @@
 from typing import Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 import warnings
 from sklearn.metrics import roc_auc_score, accuracy_score
 
 
-def Metrics(y_true: np.ndarray, y_scores: np.ndarray) -> Tuple[float, float]:
+def Metrics(y_true: NDArray, y_scores: NDArray) -> Tuple[list[float], float]:
     """Metrics for class-wise accuracy and mean accuracy.
 
     Parameters
     ----------
-    y_true : np.ndarray
+    y_true : NDArray
         Ground truth labels.
-    y_scores : np.ndarray
+    y_scores : NDArray
         Predicted labels.
 
     Returns
     -------
-    tuple[np.ndarray]
-        Tuple of arrays containing class-wise accuracy and mean accuracy.
+    tuple[list[float], float]
+        Tuple containing class-wise accuracy list and mean accuracy.
 
     """
 
@@ -31,23 +32,25 @@ def Metrics(y_true: np.ndarray, y_scores: np.ndarray) -> Tuple[float, float]:
     for i in range(y_pred.shape[-1]):
         acc[i] = accuracy_score(y_true[:, i], y_pred[:, i])
 
-    return acc.tolist(), np.mean(acc)
+    return acc.tolist(), float(np.mean(acc))
 
 
-def AUC(y_true: np.ndarray, y_pred: np.ndarray, verbose: bool = False) -> float:
+def AUC(y_true: NDArray, y_pred: NDArray, verbose: bool = False) -> list[float]:
     """Computes the macro-averaged AUC score.
 
     Parameters
     ----------
-    y_true : np.ndarray
+    y_true : NDArray
         Ground truth labels.
-    y_scores : np.ndarray
+    y_pred : NDArray
         Predicted probabilities.
+    verbose : bool, optional
+        Whether to print verbose output. (default: False)
 
     Returns
     -------
-    float
-        macro-average AUC score.
+    list[float]
+        List of AUC scores per class.
 
     """
 
@@ -65,27 +68,27 @@ def AUC(y_true: np.ndarray, y_pred: np.ndarray, verbose: bool = False) -> float:
                     f"lack of full label presence. Setting AUC to accuracy. "
                     f"Original error was: {str(e)}."
                 )
-            aucs.append((y_pred == y_true).sum() / len(y_pred))
+            aucs.append(float((y_pred == y_true).sum() / len(y_pred)))
     return aucs
 
 
 def multi_threshold_precision_recall(
-    y_true: np.ndarray, y_pred: np.ndarray, thresholds: np.ndarray
-) -> Tuple[float, float]:
+    y_true: NDArray, y_pred: NDArray, thresholds: NDArray
+) -> Tuple[NDArray, NDArray]:
     """Precision and recall for different thresholds.
 
     Parameters
     ----------
-    y_true : np.ndarray
+    y_true : NDArray
         Ground truth labels.
-    y_scores : np.ndarray
+    y_pred : NDArray
         Predicted probabilities.
-    thresholds : np.ndarray
+    thresholds : NDArray
         Thresholds to use for computing precision and recall.
 
     Returns
     -------
-    Tuple[float, float]
+    Tuple[NDArray, NDArray]
        Average precision and recall.
 
     """
@@ -117,23 +120,23 @@ def multi_threshold_precision_recall(
 
 
 def metric_summary(
-    y_true: np.ndarray, y_pred: np.ndarray, num_thresholds: int = 10
-) -> Tuple[float]:
+    y_true: NDArray, y_pred: NDArray, num_thresholds: int = 10
+) -> Tuple[float, float, list[float], list[float], list[float], list[float]]:
     """Metric summary for computing precision and recall at different thresholds. Also computes mean AUC and F1-scores
 
     Parameters
     ----------
-    y_true : np.ndarray
+    y_true : NDArray
         Ground truth labels.
-    y_scores : np.ndarray
+    y_pred : NDArray
         Predicted probabilities.
-    num_thresholds : int
-        Number of thresholds to use for computing precision and recall.
+    num_thresholds : int, optional
+        Number of thresholds to use for computing precision and recall. (default: 10)
 
     Returns
     -------
-    tuple[float]
-         Average precision, recall, F1-scores and AUC.
+    tuple[float, float, list[float], list[float], list[float], list[float]]
+         Max F1 score, mean AUC, F1 scores, average precisions, average recalls, and thresholds.
 
     """
 
@@ -146,9 +149,9 @@ def metric_summary(
         * (average_precisions * average_recalls)
         / (average_precisions + average_recalls)
     )
-    auc = np.array(AUC(y_true, y_pred, verbose=True)).mean()
+    auc = float(np.array(AUC(y_true, y_pred, verbose=True)).mean())
     return (
-        f_scores[np.nanargmax(f_scores)],
+        float(f_scores[np.nanargmax(f_scores)]),
         auc,
         f_scores.tolist(),
         average_precisions.tolist(),

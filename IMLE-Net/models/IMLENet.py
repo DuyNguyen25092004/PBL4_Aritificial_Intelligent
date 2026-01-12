@@ -8,7 +8,7 @@ Abstract: Early detection of cardiovascular diseases is crucial for effective tr
         model that leverages the multiple-channel information available in the standard 12-channel ECG recordings and learns patterns
         at the beat, rhythm, and channel level. The experimental results show that our model achieved a macro-averaged ROC-AUC
         score of 0.9216, mean accuracy of 88.85% and a maximum F1 score of 0.8057 on the PTB-XL dataset. The attention
-        visualization results from the interpretable model are compared against the cardiologist’s guidelines to validate the correctness
+        visualization results from the interpretable model are compared against the cardiologist's guidelines to validate the correctness
         and usability.
 
 More details on the paper at https://ieeexplore.ieee.org/document/9658706
@@ -39,6 +39,8 @@ from tensorflow.keras.layers import (
     BatchNormalization,
     Add,
     Bidirectional,
+    Reshape,
+    Lambda,
 )
 
 
@@ -69,7 +71,7 @@ class attention(tf.keras.layers.Layer):
         self.dim = dim
         super(attention, self).__init__(**kwargs)
 
-    def build(self, input_shape: Tuple[int, int, int]) -> None:
+    def build(self, input_shape: tuple[int, int, int]) -> None:
         """Builds the attention layer.
 
         alpha = softmax(V.T * tanh(W.T * x + b))
@@ -123,8 +125,8 @@ class attention(tf.keras.layers.Layer):
 
         base_config = super().get_config()
         config = {
-            "return sequences": tf.keras.initializers.serialize(self.return_sequences),
-            "att dim": tf.keras.initializers.serialize(self.dim),
+            "return_sequences": self.return_sequences,
+            "dim": self.dim,
         }
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -151,7 +153,7 @@ def relu_bn(inputs: tf.Tensor) -> tf.Tensor:
 def residual_block(
     x: tf.Tensor, downsample: bool, filters: int, kernel_size: int = 8
 ) -> tf.Tensor:
-    """[summary]
+    """Implements a residual block.
 
     Parameters
     ----------
@@ -207,7 +209,13 @@ def build_imle_net(config, sub=False) -> tf.keras.Model:
     inputs = Input(shape=(config.input_channels, config.signal_len, 1), batch_size=None)
 
     # Beat Level
-    x = K.reshape(inputs, (-1, config.beat_len, 1))
+    # Changed from: K.reshape(inputs, (-1, config.beat_len, 1))
+    # To use Lambda layer for dynamic reshaping in Keras 3.x
+    x = Lambda(
+        lambda t: tf.reshape(t, (-1, config.beat_len, 1)),
+        name="beat_reshape"
+    )(inputs)
+    
     x = Conv1D(
         filters=config.start_filters, kernel_size=config.kernel_size, padding="same"
     )(x)
@@ -223,12 +231,23 @@ def build_imle_net(config, sub=False) -> tf.keras.Model:
     x, _ = attention(name="beat_att")(x)
 
     # Rhythm level
-    x = K.reshape(x, (-1, int(config.signal_len / config.beat_len), 128))
+    # Changed from: K.reshape(x, (-1, int(config.signal_len / config.beat_len), 128))
+    rhythm_len = int(config.signal_len / config.beat_len)
+    x = Lambda(
+        lambda t: tf.reshape(t, (-1, rhythm_len, 128)),
+        name="rhythm_reshape"
+    )(x)
+    
     x = Bidirectional(LSTM(config.lstm_units, return_sequences=True))(x)
     x, _ = attention(name="rhythm_att")(x)
 
     # Channel level
-    x = K.reshape(x, (-1, config.input_channels, 128))
+    # Changed from: K.reshape(x, (-1, config.input_channels, 128))
+    x = Lambda(
+        lambda t: tf.reshape(t, (-1, config.input_channels, 128)),
+        name="channel_reshape"
+    )(x)
+    
     x, _ = attention(name="channel_att")(x)
     outputs = Dense(config.classes, activation="sigmoid")(x)
 

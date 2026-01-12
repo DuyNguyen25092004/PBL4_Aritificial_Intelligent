@@ -236,7 +236,8 @@ def add_compile(model: tf.keras.Model, **params) -> tf.keras.Model:
 
     """
 
-    optimizer = Adam(lr=params["learning_rate"], clipnorm=params.get("clipnorm", 1))
+    # Fixed: Changed 'lr' to 'learning_rate' for Python 3.12 compatibility
+    optimizer = Adam(learning_rate=params["learning_rate"], clipnorm=params.get("clipnorm", 1))
     model.compile(
         loss=tf.keras.losses.BinaryCrossentropy(),
         optimizer=optimizer,

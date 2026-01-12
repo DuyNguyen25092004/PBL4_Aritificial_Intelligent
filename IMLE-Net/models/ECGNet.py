@@ -9,7 +9,7 @@ This file can also be imported as a module and contains the following functions:
 
 """
 
-from typing import List
+from typing import Optional
 import torch
 import torch.nn as nn
 
@@ -29,8 +29,8 @@ class ResBlock(nn.Module):
         The stride for 1D-convolution.
     padding: int
         The padding for 1D-convolution.
-    downsample: bool, optional
-        If True, downsamples the input. (default: None)
+    downsample: Optional[nn.Module], optional
+        If provided, downsamples the input. (default: None)
 
     Methods
     -------
@@ -46,7 +46,7 @@ class ResBlock(nn.Module):
         kernel_size: int,
         stride: int,
         padding: int,
-        downsample: bool = None,
+        downsample: Optional[nn.Module] = None,
     ) -> None:
         super(ResBlock, self).__init__()
         self.bn1 = nn.BatchNorm1d(num_features=in_channels)
@@ -96,10 +96,12 @@ class ECGNet(nn.Module):
 
     Attributes
     ----------
-    struct: list, optional
+    struct: list[int], optional
         The list of kernel sizes for each layer. (default: [15, 17, 19, 21])
-    planes: int, optional
-        The number of output channels for each layer. (default: 16)
+    in_channels: int, optional
+        The number of input channels. (default: 12)
+    fixed_kernel_size: int, optional
+        The fixed kernel size for convolutions. (default: 17)
     num_classes: int, optional
         The number of ouput classes. (default: 5)
 
@@ -114,12 +116,14 @@ class ECGNet(nn.Module):
 
     def __init__(
         self,
-        struct: List[int] = [15, 17, 19, 21],
+        struct: list[int] = None,
         in_channels: int = 12,
         fixed_kernel_size: int = 17,
         num_classes: int = 5,
     ) -> None:
         super(ECGNet, self).__init__()
+        if struct is None:
+            struct = [15, 17, 19, 21]
         self.struct = struct
         self.planes = 16
         self.parallel_conv = nn.ModuleList()
@@ -157,7 +161,7 @@ class ECGNet(nn.Module):
 
     def _make_layer(
         self, kernel_size: int, stride: int, blocks: int = 15, padding: int = 0
-    ) -> List[ResBlock]:
+    ) -> nn.Sequential:
         """Builds the ECGNet architecture.
 
         Parameters
@@ -173,7 +177,7 @@ class ECGNet(nn.Module):
 
         Returns
         -------
-        nn.Module
+        nn.Sequential
             The output layer of the ECGNet model.
         """
 
