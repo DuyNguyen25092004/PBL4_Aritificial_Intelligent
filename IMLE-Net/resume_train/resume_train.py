@@ -103,7 +103,7 @@ def train(
     if sub_disease:
         try:
             path_weights = os.path.join(
-                os.getcwd(), "checkpoints", f"{name}_weights.h5"
+                os.getcwd(), "checkpoints", f"{name}_weights.weights.h5"
             )
             model.load_weights(path_weights)
         except Exception as e:
@@ -218,9 +218,9 @@ if __name__ == "__main__":
     print("="*70)
     
     if args.sub:
-        checkpoint_name = f"{args.model}_sub_diagnostic_weights.h5"
+        checkpoint_name = f"{args.model}_sub_diagnostic_weights.weights.h5"
     else:
-        checkpoint_name = f"{args.model}_weights.h5"
+        checkpoint_name = f"{args.model}_weights.weights.h5"
     
     checkpoint_path = os.path.join(os.getcwd(), "checkpoints", checkpoint_name)
     

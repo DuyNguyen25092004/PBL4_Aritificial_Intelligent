@@ -114,7 +114,7 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown model: {args.model}")
 
-    path_weights = os.path.join(os.getcwd(), "checkpoints", f"{args.model}_weights.h5")
+    path_weights = os.path.join(os.getcwd(), "checkpoints", f"{args.model}_weights.weights.h5")
     model.load_weights(path_weights)
 
     test(model, path=args.data_dir, batch_size=args.batchsize, name=args.model)

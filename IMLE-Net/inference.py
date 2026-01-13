@@ -36,7 +36,7 @@ def build_model(name: str = "imle_net") -> tf.keras.Model:
     outputs = tf.keras.layers.Dense(3, activation='softmax')(model.layers[-2].output[0])
     model = tf.keras.models.Model(inputs = model.input, outputs = outputs)
     try:
-        path_weights = os.path.join(os.getcwd(), "checkpoints", f"{name}_sub_diagnostic_weights.h5")
+        path_weights = os.path.join(os.getcwd(), "checkpoints", f"{name}_sub_diagnostic_weights.weights.h5")
         model.load_weights(path_weights)
     except:
         raise Exception("Model weights file not found, please train the model on sub-diagnostic diseases of MI first.")     

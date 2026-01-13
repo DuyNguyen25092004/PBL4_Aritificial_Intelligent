@@ -103,7 +103,7 @@ def train(
     if sub_disease:
         try:
             path_weights = os.path.join(
-                os.getcwd(), "checkpoints", f"{name}_weights.h5"
+                os.getcwd(), "checkpoints", f"{name}_weights.weights.h5"
             )
             model.load_weights(path_weights)
         except Exception as e:
