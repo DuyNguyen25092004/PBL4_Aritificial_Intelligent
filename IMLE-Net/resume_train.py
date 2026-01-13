@@ -1,8 +1,8 @@
-"""Resume training from checkpoint for TensorFlow/Keras models
+"""Main script to run the training of the model(imle_net, mousavi, rajpurkar) with resume capability.
 """
 
-__author__ = "Likith Reddy (Modified for resume training)"
-__version__ = "1.0.1"
+__author__ = "Likith Reddy"
+__version__ = "1.0.0"
 __email__ = "likith012@gmail.com"
 
 
@@ -33,7 +33,7 @@ np.random.seed(seed)
 def train(
     model: tf.keras.Model,
     path: str = "data/ptb",
-    batch_size: int = 32,
+    batch_size: int = 32,  # Reduce this to 16 if there is any memory problem
     epochs: int = 60,
     loggr: Optional[object] = None,
     name: str = "imle_net",
@@ -156,7 +156,7 @@ def train(
 
 
 if __name__ == "__main__":
-    """Main function to resume training of the model from checkpoint."""
+    """Main function to run the training of the model."""
 
     # Set the GPU to allocate only used memory at runtime.
     gpu_devices = tf.config.list_physical_devices('GPU')
@@ -193,7 +193,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Build model
     if args.model == "imle_net":
         from models.IMLENet import build_imle_net
         from configs.imle_config import Config
@@ -213,6 +212,7 @@ if __name__ == "__main__":
         raise ValueError(f"Unknown model: {args.model}")
 
     # ========== RESUME TRAINING FEATURE ==========
+    # Check for existing checkpoint and load if available
     print("="*70)
     print("CHECKING FOR EXISTING CHECKPOINT...")
     print("="*70)
@@ -242,21 +242,19 @@ if __name__ == "__main__":
     print()
     # ========== END RESUME TRAINING FEATURE ==========
 
-    # Setup logger
     if args.loggr:
         import wandb
 
         wandb_instance = wandb.init(
             project="IMLE-Net",
-            name=f"{args.model}-resume",
-            notes=f"Resume training: {args.model} with batch size: {args.batchsize} and epochs: {args.epochs}",
+            name=args.model,
+            notes=f"Model: {args.model} with batch size: {args.batchsize} and epochs: {args.epochs}",
             save_code=True,
         )
         logger = wandb_instance
     else:
         logger = None
 
-    # Start/Resume training
     train(
         model,
         path=args.data_dir,
@@ -266,3 +264,58 @@ if __name__ == "__main__":
         name=args.model,
         sub_disease=args.sub,
     )
+
+    # ========== AUTO-SAVE TO GOOGLE DRIVE ==========
+    try:
+        from google.colab import drive
+        print("\n" + "="*70)
+        print("AUTO-BACKUP TO GOOGLE DRIVE")
+        print("="*70)
+        
+        # Mount Drive if not mounted
+        if not os.path.exists('/content/drive'):
+            print("Mounting Google Drive...")
+            drive.mount('/content/drive')
+        
+        # Create target directory
+        drive_path = "/content/drive/MyDrive/IMLE-Net-Project/results"
+        os.makedirs(drive_path, exist_ok=True)
+        
+        # Copy weights
+        import shutil
+        checkpoint_dir = os.path.join(os.getcwd(), "checkpoints")
+        
+        if args.sub:
+            weight_file = f"{args.model}_sub_diagnostic_weights.weights.h5"
+        else:
+            weight_file = f"{args.model}_weights.weights.h5"
+        
+        src = os.path.join(checkpoint_dir, weight_file)
+        dst = os.path.join(drive_path, weight_file)
+        
+        if os.path.exists(src):
+            shutil.copy2(src, dst)
+            file_size = os.path.getsize(src) / (1024 * 1024)
+            print(f"✓ Weights saved: {weight_file} ({file_size:.2f} MB)")
+        
+        # Copy logs
+        log_dir = os.path.join(os.getcwd(), "logs")
+        if args.sub:
+            log_file = f"{args.model}_sub_disease.json"
+        else:
+            log_file = f"{args.model}_train_logs.json"
+        
+        src_log = os.path.join(log_dir, log_file)
+        dst_log = os.path.join(drive_path, log_file)
+        
+        if os.path.exists(src_log):
+            shutil.copy2(src_log, dst_log)
+            print(f"✓ Logs saved: {log_file}")
+        
+        print(f"✓ Location: {drive_path}")
+        print("="*70)
+    except ImportError:
+        print("\n⚠ Not running on Google Colab, skipping Drive backup")
+    except Exception as e:
+        print(f"\n⚠ Drive backup failed: {e}")
+    # ========== END AUTO-SAVE TO GOOGLE DRIVE ==========
