@@ -64,7 +64,7 @@ class model_checkpoint(tf.keras.callbacks.Callback):
         self.sub = sub
         self.best_score = 0.0
 
-    def on_epoch_end(self, epoch: int, logs: dict = {}) -> None:
+    def on_epoch_end(self, epoch: int, logs: dict = None) -> None:
         """Saves the model and logs the metrics at the end of each epoch.
 
         Parameters
@@ -72,9 +72,11 @@ class model_checkpoint(tf.keras.callbacks.Callback):
         epoch: int
             Epoch number.
         logs: dict, optional
-            Dictionary containing the metrics. (default: {})
+            Dictionary containing the metrics. (default: None)
 
         """
+        if logs is None:
+            logs = {}
 
         test_len = len(self.test_data)
         score = []
@@ -82,7 +84,7 @@ class model_checkpoint(tf.keras.callbacks.Callback):
 
         for i in range(test_len):
             X, y = self.test_data[i][0], self.test_data[i][1]
-            temp_score = self.model.predict(X)
+            temp_score = self.model.predict(X, verbose=0)
             score.append(temp_score)
             gt.append(y)
 
@@ -114,7 +116,3 @@ class model_checkpoint(tf.keras.callbacks.Callback):
 
         logs["val_roc_auc"] = roc_auc
         logs["val_accuracy_score"] = accuracy
-
-    def set_model(self, model: tf.keras.Model) -> None:
-        """Sets the model to be saved."""
-        self.model = model
