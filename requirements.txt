@@ -1,0 +1,35 @@
+# ============================================================
+# Requirements for IMLE-Net ECG Classification Project
+# Framework: TensorFlow / Keras
+# Environment: Google Colab / Kaggle Notebook
+#
+# Note: Colab/Kaggle đã cài sẵn TensorFlow, numpy, matplotlib.
+# File này dùng để cài các thư viện bổ sung còn thiếu.
+# Chạy: pip install -r requirements.txt
+# ============================================================
+
+# --- Core Deep Learning ---
+tensorflow>=2.10.0,<2.16.0       # IMLE-Net (Keras API built-in)
+keras>=2.10.0                     # Explicit Keras nếu cần
+
+# --- ECG / Signal Processing ---
+wfdb>=4.1.0                       # Đọc file ECG định dạng PhysioNet (.hea, .dat)
+neurokit2>=0.2.0                  # Tiền xử lý tín hiệu ECG (lọc nhiễu, R-peak detection)
+scipy>=1.9.0                      # Bộ lọc tín hiệu (bandpass, notch filter)
+PyWavelets>=1.4.0                 # Wavelet transform cho ECG
+
+# --- Data Handling ---
+numpy>=1.23.0
+pandas>=1.5.0
+h5py>=3.7.0                       # Đọc/ghi file .h5 (model weights, dataset)
+kaggle>=1.5.16                    # Tải dataset từ Kaggle API
+
+# --- Machine Learning & Metrics ---
+scikit-learn>=1.1.0               # ROC-AUC, F1-score, train/test split
+
+# --- Visualization ---
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# --- Utilities ---
+tqdm>=4.64.0                      # Progress bar khi load data / training
