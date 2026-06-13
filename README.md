@@ -8,7 +8,7 @@
 Dự án này mở rộng mô hình **IMLE-Net** (*An Interpretable Multi-level Multi-channel Model for ECG Classification*) của Likith Reddy et al. (IEEE SMC 2021) theo hai hướng:
 
 1. **Huấn luyện trên tập dữ liệu gốc PTB-XL** (12 kênh ECG)
-2. **Huấn luyện trên tập dữ liệu tái tạo** — sử dụng mô hình **RESCNN** để tái tạo 12 kênh từ 3 kênh (I, II, V2)
+2. **Huấn luyện trên tập dữ liệu tái tạo** — sử dụng mô hình **RESCNN** để tái tạo 12 kênh từ 3 kênh (I, II, V3)
 
 > **Bài báo gốc:** [IEEE Xplore](https://ieeexplore.ieee.org/document/9658706) | [arXiv](https://arxiv.org/abs/2204.05116)
 > **Tác giả gốc:** Likith Reddy, Vivek Talwar, Shanmukh Alle, Raju. S. Bapi, U. Deva Priyakumar
@@ -31,7 +31,7 @@ Dự án này mở rộng mô hình **IMLE-Net** (*An Interpretable Multi-level 
 
 ## Giới Thiệu
 
-Phát hiện sớm các bệnh tim mạch là yếu tố then chốt trong điều trị lâm sàng. Điện tâm đồ (ECG) 12 kênh là công cụ tiêu chuẩn để chẩn đoán các bệnh lý tim. Tuy nhiên, trong nhiều thiết bị wearable hoặc hệ thống giám sát từ xa, chỉ có thể thu thập được **3 kênh ECG** (I, II, V2).
+Phát hiện sớm các bệnh tim mạch là yếu tố then chốt trong điều trị lâm sàng. Điện tâm đồ (ECG) 12 kênh là công cụ tiêu chuẩn để chẩn đoán các bệnh lý tim. Tuy nhiên, trong nhiều thiết bị wearable hoặc hệ thống giám sát từ xa, chỉ có thể thu thập được **3 kênh ECG** (I, II, V3).
 
 Dự án này giải quyết bài toán đó theo hai bước:
 
@@ -125,7 +125,7 @@ unzip data/ptb.zip -d data/ \
 
 ### Tập Dữ Liệu Tái Tạo (RESCNN)
 
-Tập dữ liệu PTB-XL được tái tạo từ 3 kênh (I, II, V2) thông qua mô hình RESCNN, đã được công bố công khai trên Kaggle:
+Tập dữ liệu PTB-XL được tái tạo từ 3 kênh (I, II, V3) thông qua mô hình RESCNN, đã được công bố công khai trên Kaggle:
 
 > 📦 **[Reconstructed PTB-XL — Kaggle Dataset](https://www.kaggle.com/datasets/trnduynguyn/reconstructed-ptb-xl)**
 
@@ -203,20 +203,6 @@ PBL4_Aritificial_Intelligent/
 
 ---
 
-## Trích Dẫn
-
-Nếu bạn sử dụng code hoặc ý tưởng từ dự án này, vui lòng trích dẫn bài báo gốc:
-
-```bibtex
-@INPROCEEDINGS{9658706,
-  author={Reddy, Likith and Talwar, Vivek and Alle, Shanmukh and Bapi, Raju. S. and Priyakumar, U. Deva},
-  booktitle={2021 IEEE International Conference on Systems, Man, and Cybernetics (SMC)},
-  title={IMLE-Net: An Interpretable Multi-level Multi-channel Model for ECG Classification},
-  year={2021},
-  pages={1068-1074},
-  doi={10.1109/SMC52423.2021.9658706}
-}
-```
 
 ---
 
