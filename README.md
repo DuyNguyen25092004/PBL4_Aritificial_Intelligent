@@ -182,7 +182,7 @@ Sau đó mở notebook và chạy tuần tự các cell từ trên xuống.
 
 ```
 PBL4_Aritificial_Intelligent/
-├── Final_model/                             # Model weights sau huấn luyện
+├── Final_model/                             # File notebook huấn luyện mô hình
 ├── images/
 │   ├── eda.png
 │   └── attention_viz.png
@@ -198,9 +198,8 @@ PBL4_Aritificial_Intelligent/
 
 | Mô hình | Tập dữ liệu | Link |
 |---------|-------------|------|
-| IMLE-Net | PTB-XL gốc | [best_model_weights.h5](checkpoints/best_model_weights.h5) |
-| RESCNN | PTB-XL (3 kênh → 12 kênh) | *đang cập nhật* |
-| IMLE-Net | Tập tái tạo RESCNN | *đang cập nhật* |
+| IMLE-Net | PTB-XL gốc | [best_model_weights.h5](https://drive.google.com/file/d/1-ZJSEr_NtbLXWWx5otXT5ItE5p-Wc0HN/view?usp=sharing). |
+| IMLE-Net | Tập tái tạo RESCNN | 📦 **[Reconstructed PTB-XL — Kaggle Dataset](https://www.kaggle.com/datasets/trnduynguyn/reconstructed-ptb-xl)** |
 
 ---
 
