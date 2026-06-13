@@ -199,7 +199,7 @@ PBL4_Aritificial_Intelligent/
 | Mô hình | Tập dữ liệu | Link |
 |---------|-------------|------|
 | IMLE-Net | PTB-XL gốc | [best_model_weights.h5](https://drive.google.com/file/d/1-ZJSEr_NtbLXWWx5otXT5ItE5p-Wc0HN/view?usp=sharing). |
-| IMLE-Net | Tập tái tạo RESCNN | 📦 **[Reconstructed PTB-XL — Kaggle Dataset](https://www.kaggle.com/datasets/trnduynguyn/reconstructed-ptb-xl)** |
+| IMLE-Net | Tập tái tạo RESCNN | [best_model_weights.h5](https://www.kaggle.com/code/trnduynguyn/ecg-12leads). |
 
 ---
 
