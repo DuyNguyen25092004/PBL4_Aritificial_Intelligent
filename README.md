@@ -59,7 +59,7 @@ IMLE-Net học đặc trưng ở 3 cấp độ: **beat (nhịp đập)**, **rhyt
 ### RESCNN (Tái Tạo Kênh)
 
 ```
-Đầu vào: ECG 3 kênh (I, II, V2)
+Đầu vào: ECG 3 kênh (I, II, V3)
     │
     ├─► Residual CNN blocks (đặc trưng thời gian-tần số)
     └─► Output: 12 kênh ECG được tái tạo
