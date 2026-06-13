@@ -24,7 +24,7 @@ Dự án này mở rộng mô hình **IMLE-Net** (*An Interpretable Multi-level 
 - [Cài đặt môi trường](#cài-đặt-môi-trường)
 - [Huấn luyện trên PTB-XL (12 kênh)](#huấn-luyện-trên-ptb-xl-12-kênh)
 - [Huấn luyện trên tập dữ liệu tái tạo (RESCNN)](#huấn-luyện-trên-tập-dữ-liệu-tái-tạo-rescnn)
-- [Trực quan hóa Attention](#trực-quan-hóa-attention)
+- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
 - [Trích dẫn](#trích-dẫn)
 
 ---
@@ -90,7 +90,13 @@ IMLE-Net học đặc trưng ở 3 cấp độ: **beat (nhịp đập)**, **rhyt
 | ECGNet | 0.9101 | 87.35% | 0.7712 |
 | Rajpurkar et al. | 0.9155 | 87.91% | 0.7895 |
 | **IMLE-Net (PTB-XL gốc)** | **0.9216** | **88.85%** | **0.8057** |
-| **IMLE-Net (Tập tái tạo RESCNN)** | *đang cập nhật* | *đang cập nhật* | *đang cập nhật* |
+| **IMLE-Net (Tập tái tạo RESCNN)** | **0.9224** | **60.92%** | **0.7314** |
+
+> **Chi tiết AUC theo từng lớp (tập tái tạo):**
+>
+> | NORM | MI | STTC | CD | HYP |
+> |:----:|:--:|:----:|:--:|:---:|
+> | 0.9502 | 0.9300 | 0.9193 | 0.9123 | 0.9003 |
 
 ### Trực Quan Hóa Attention
 
@@ -172,44 +178,19 @@ Sau đó mở notebook và chạy tuần tự các cell từ trên xuống.
 
 ---
 
-## Trực Quan Hóa Attention
-
-Sau khi huấn luyện xong, chạy inference và xuất attention maps:
-
-```bash
-python inference.py --dir path/to/ecg_file
-```
-
-Kết quả lưu tại `results/`. Mô hình cung cấp:
-
-- **Beat-level attention:** Vùng nào trong một nhịp đập quan trọng nhất
-- **Rhythm-level attention:** Nhịp nào trong chuỗi ECG bất thường
-- **Channel-level attention:** Kênh ECG nào đóng góp nhiều nhất cho dự đoán
-
----
-
 ## Cấu Trúc Thư Mục
 
 ```
 PBL4_Aritificial_Intelligent/
-├── data/
-│   ├── ptb/                          # PTB-XL gốc (tải từ PhysioNet)
-│   └── ptb_reconstructed/            # Dữ liệu tái tạo từ RESCNN (tải từ Kaggle)
-├── models/
-│   ├── imle_net.py                   # Kiến trúc IMLE-Net
-│   └── rescnn.py                     # Kiến trúc RESCNN
-├── notebooks/
-│   ├── IMLE_NET_TRAIN_PTB_XL.ipynb          # Train trên PTB-XL gốc
-│   └── IMLE_NET_TRAIN_RECONSTRUCTED.ipynb   # Train trên tập tái tạo
-├── checkpoints/                      # Lưu model weights sau huấn luyện
-├── results/                          # Lưu attention visualizations
+├── Final_model/                             # Model weights sau huấn luyện
 ├── images/
 │   ├── eda.png
 │   └── attention_viz.png
+├── README.md
 └── requirements.txt
 ```
 
-> **Lưu ý:** Toàn bộ pipeline (tiền xử lý, dataloader, huấn luyện, đánh giá, trực quan hóa) đã được tích hợp trực tiếp trong từng notebook. Không cần chạy script riêng lẻ.
+> **Lưu ý:** Toàn bộ pipeline (tiền xử lý, dataloader, huấn luyện, đánh giá, trực quan hóa) đã được tích hợp trực tiếp trong từng notebook chạy trên Colab / Kaggle.
 
 ---
 
